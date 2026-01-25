@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Searcher</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <div class="header">
+            <h1>Anime Searcher</h1>
+            <button id="theme-toggle" title="Сменить тему">🌙</button>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Введи название аниме (рус/eng/jp)..." autocomplete="off">
+            <select id="sort-select">
+                <option value="score">По рейтингу (score)</option>
+                <option value="popularity">По популярности</option>
+                <option value="members">По количеству участников</option>
+                <option value="favorites">По избранному</option>
+                <option value="start_date">По дате выхода</option>
+            </select>
+            <button id="random-btn">Случайное аниме</button>
+        </div>
+        
+        <div id="filters" class="filters" style="max-height: 0; overflow: hidden; opacity: 0; padding-top: 0; padding-bottom: 0;">
+            <h3>Фильтры для случайного аниме</h3>
+            
+            <div class="filter-group">
+                <label>Тип:</label>
+                <select id="filter-type">
+                    <option value="">Любой</option>
+                    <option value="tv">TV</option>
+                    <option value="movie">Movie</option>
+                    <option value="ova">OVA</option>
+                    <option value="special">Special</option>
+                    <option value="ona">ONA</option>
+                    <option value="music">Music</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Статус:</label>
+                <select id="filter-status">
+                    <option value="">Любой</option>
+                    <option value="airing">В эфире</option>
+                    <option value="complete">Завершено</option>
+                    <option value="upcoming">Предстоящее</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Рейтинг:</label>
+                <select id="filter-rating">
+                    <option value="">Любой</option>
+                    <option value="g">G (Все возрасты)</option>
+                    <option value="pg">PG (Дети)</option>
+                    <option value="pg13">PG-13 (Подростки 13+)</option>
+                    <option value="r17">R-17 (Насилие/ненормативная лексика)</option>
+                    <option value="r">R+ (Легкая нагота)</option>
+                    <option value="rx">Rx (Хентай)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Год от:</label>
+                <input type="number" id="filter-min-year" min="1900" max="2026" placeholder="e.g., 2000">
+                <label>До:</label>
+                <input type="number" id="filter-max-year" min="1900" max="2026" placeholder="e.g., 2025">
+            </div>
+            <div class="filter-group genres">
+                <label>Жанры (выбери один или несколько):</label>
+                <div class="genres-list">
+                    <!-- Список жанров из Jikan -->
+                    <label><input type="checkbox" value="1"> Action</label>
+                    <label><input type="checkbox" value="50"> Adult Cast</label>
+                    <label><input type="checkbox" value="46"> Award Winning</label>
+                    <label><input type="checkbox" value="51"> Anthropomorphic</label>
+                    <label><input type="checkbox" value="28"> Boys Love</label>
+                    <label><input type="checkbox" value="26"> Girls Love</label>
+                    <label><input type="checkbox" value="4"> Comedy</label>
+                    <label><input type="checkbox" value="5"> Avant Garde</label>
+                    <label><input type="checkbox" value="53"> Childcare</label>
+                    <label><input type="checkbox" value="52"> CGDCT</label>
+                    <label><input type="checkbox" value="39"> Detective</label>
+                    <label><input type="checkbox" value="55"> Delinquents</label>
+                    <label><input type="checkbox" value="8"> Drama</label>
+                    <label><input type="checkbox" value="49"> Erotica</label>
+                    <label><input type="checkbox" value="9"> Ecchi</label>
+                    <label><input type="checkbox" value="56"> Educational</label>
+                    <label><input type="checkbox" value="57"> Gag Humor</label>
+                    <label><input type="checkbox" value="58"> Gore</label>
+                    <label><input type="checkbox" value="47"> Gourmet</label>
+                    <label><input type="checkbox" value="60"> Idols (Female)</label>
+                    <label><input type="checkbox" value="61"> Idols (Male)</label>
+                    <label><input type="checkbox" value="67"> Medical</label>
+                    <label><input type="checkbox" value="43"> Josei</label>
+                    <label><input type="checkbox" value="25"> Shoujo</label>
+                    <label><input type="checkbox" value="42"> Seinen</label>
+                    <label><input type="checkbox" value="36"> Slice of Life</label>
+                    <label><input type="checkbox" value="57"> Gag Humor</label>
+                    <label><input type="checkbox" value="13"> Historical</label>
+                    <label><input type="checkbox" value="14"> Horror</label>
+                    <label><input type="checkbox" value="35"> Harem</label>
+                    <label><input type="checkbox" value="12"> Hentai</label>
+                    <label><input type="checkbox" value="66"> Mahou Shoujo</label>
+                    <label><input type="checkbox" value="65"> Magical Sex Shift</label>
+                    <label><input type="checkbox" value="17"> Martial Arts</label>
+                    <label><input type="checkbox" value="18"> Mecha</label>
+                    <label><input type="checkbox" value="19"> Music</label>
+                    <label><input type="checkbox" value="2"> Adventure</label>
+                    <label><input type="checkbox" value="11"> Strategy Game</label>
+                    <label><input type="checkbox" value="77"> Team Sports</label>
+                    <label><input type="checkbox" value="30"> Sports</label>
+                    <label><input type="checkbox" value="54"> Combat Sports</label>
+                    <label><input type="checkbox" value="3"> Racing</label>
+                    <label><input type="checkbox" value="70"> Performing Arts</label>
+                    <label><input type="checkbox" value="71"> Pets</label>
+                    <label><input type="checkbox" value="58"> Gore</label>
+                    <label><input type="checkbox" value="40"> Psychological</label>
+                    <label><input type="checkbox" value="41"> Suspense</label>
+                    <label><input type="checkbox" value="37"> Supernatural</label>
+                    <label><input type="checkbox" value="31"> Super Power</label>
+                    <label><input type="checkbox" value="76"> Survival</label>
+                    <label><input type="checkbox" value="74"> Love Status Quo</label>
+                    <label><input type="checkbox" value="64"> Love Polygon</label>
+                    <label><input type="checkbox" value="73"> Reverse Harem</label>
+                    <label><input type="checkbox" value="22"> Romance</label>
+                    <label><input type="checkbox" value="72"> Reincarnation</label>
+                    <label><input type="checkbox" value="21"> Samurai</label>
+                    <label><input type="checkbox" value="23"> School</label>
+                    <label><input type="checkbox" value="24"> Sci-Fi</label>
+                    <label><input type="checkbox" value="29"> Space</label>
+                    <label><input type="checkbox" value="82"> Urban Fantasy</label>
+                    <label><input type="checkbox" value="83"> Villainess</label>
+                    <label><input type="checkbox" value="32"> Vampire</label>
+                    <label><input type="checkbox" value="15"> Kids</label>
+                    <label><input type="checkbox" value="27"> Shounen</label>
+                    <label><input type="checkbox" value="38"> Military</label>
+                    <label><input type="checkbox" value="48"> Workplace</label>
+                    <label><input type="checkbox" value="59"> High Stakes Game</label>
+                    <label><input type="checkbox" value="62"> Isekai</label>
+                    <label><input type="checkbox" value="63"> Iyashikei</label>
+                    <label><input type="checkbox" value="68"> Organized Crime</label>
+                    <label><input type="checkbox" value="69"> Otaku Culture</label>
+                    <label><input type="checkbox" value="75"> Showbiz</label>
+                    <label><input type="checkbox" value="79"> Video Game</label>
+                    <label><input type="checkbox" value="80"> Visual Arts</label>
+                    <label><input type="checkbox" value="81"> Crossdressing</label>
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button id="apply-filters" class="btn-primary">Применить и получить случайные</button>
+                <button id="clear-filters" class="btn-secondary">Очистить фильтры</button>
+            </div>
+
+            <div id="found-count" class="found-count hidden"></div>
+        </div>
+        
+        <button id="toggle-filters">Показать фильтры ▼</button>
+        
+        <div id="loading" class="loading hidden">Ищем...</div>
+        <div id="error" class="error hidden"></div>
+        
+        <div id="results" class="grid"></div>
+        
+        <div id="pagination" class="pagination hidden">
+            <button id="prev-page">← Назад</button>
+            <span id="page-info"></span>
+            <button id="next-page">Вперёд →</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <!-- Модальное окно NSFW -->
+    <div id="nsfw-modal" class="modal">
+        <div class="modal-content">
+            <h2>Важно!</h2>
+            <p>Этот сайт может показывать контент 18+ (Hentai, Ecchi и другой NSFW-материал).<br>Хотите включить его?</p>
+            
+            <div class="modal-buttons">
+                <button id="nsfw-yes" class="btn-yes">Да, показывать 18+</button>
+                <button id="nsfw-no" class="btn-no">Нет, только безопасный контент</button>
+            </div>
+            
+            <label class="remember">
+                <input type="checkbox" id="remember-choice"> Запомнить мой выбор
+            </label>
+        </div>
+    </div>
+</body>
+</html>
