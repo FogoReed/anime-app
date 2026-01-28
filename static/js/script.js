@@ -1,361 +1,415 @@
+// Глобальные переменные
 let currentPage = 1;
 let currentQuery = '';
 let debounceTimer;
 let allowNSFW = localStorage.getItem('nsfw_choice') === 'true';
 let currentAnimeList = [];
 
-const resultsDiv = document.getElementById('results');
-const loading = document.getElementById('loading');
-const errorDiv = document.getElementById('error');
-const pagination = document.getElementById('pagination');
-const prevBtn = document.getElementById('prev-page');
-const nextBtn = document.getElementById('next-page');
-const pageInfo = document.getElementById('page-info');
-const filtersDiv = document.getElementById('filters');
-const toggleFiltersBtn = document.getElementById('toggle-filters');
-const themeToggle = document.getElementById('theme-toggle');
+// --- DOMContentLoaded: все обращения к элементам здесь ---
+document.addEventListener('DOMContentLoaded', () => {
 
-// Тема
-function setTheme(theme) {
-    document.body.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
-}
+    // --- Элементы страницы ---
+    const resultsDiv = document.getElementById('results');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    const pagination = document.getElementById('pagination');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const pageInfo = document.getElementById('page-info');
+    const filtersDiv = document.getElementById('filters');
+    const toggleFiltersBtn = document.getElementById('toggle-filters');
+    const themeToggle = document.getElementById('theme-toggle');
 
-const savedTheme = localStorage.getItem('theme') || 'dark';
-setTheme(savedTheme);
+    console.log('resultsDiv:', resultsDiv);
+    console.log('loading:', loading);
+    console.log('errorDiv:', errorDiv);
+    console.log('pagination:', pagination);
+    console.log('prevBtn:', prevBtn);
+    console.log('nextBtn:', nextBtn);
+    console.log('pageInfo:', pageInfo);
+    console.log('filtersDiv:', filtersDiv);
+    console.log('toggleFiltersBtn:', toggleFiltersBtn);
+    console.log('themeToggle:', themeToggle);
 
-themeToggle.addEventListener('click', () => {
-    const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-});
-
-// Toggle фильтров
-toggleFiltersBtn.addEventListener('click', () => {
-    if (filtersDiv.style.maxHeight === '0px' || filtersDiv.style.maxHeight === '') {
-        filtersDiv.style.maxHeight = '2000px';
-        filtersDiv.style.opacity = '1';
-        filtersDiv.style.paddingTop = '20px';
-        filtersDiv.style.paddingBottom = '20px';
-        toggleFiltersBtn.textContent = 'Скрыть фильтры ▲';
-    } else {
-        filtersDiv.style.maxHeight = '0px';
-        filtersDiv.style.opacity = '0';
-        filtersDiv.style.paddingTop = '0';
-        filtersDiv.style.paddingBottom = '0';
-        toggleFiltersBtn.textContent = 'Показать фильтры ▼';
+    // --- Функции рендера и загрузки ---
+    function renderAnime(anime) {
+        const year = anime.start_date ? anime.start_date.slice(0, 4) : '—';
+        const animeData = {
+            mal_id: anime.mal_id,
+            title: anime.title,
+            image: anime.image,
+            type: anime.type,
+            episodes: anime.episodes,
+            year,
+            synopsis: anime.synopsis
+        };
+        const animeDataStr = encodeURIComponent(JSON.stringify(animeData));
+        return `
+            <div class="card" data-anime="${animeDataStr}">
+                <img src="${anime.image}" alt="${anime.title}">
+                <div class="card-info">
+                    <div class="card-title">${anime.title}</div>
+                    <div class="card-meta">${anime.type} • ${year} • ${anime.episodes} эп. • ⭐ ${anime.score || '—'}</div>
+                    <div class="card-synopsis">${anime.synopsis}</div>
+                    ${document.body.dataset.userLoggedIn === 'true' ? `<button class="btn-add">➕ В список</button>` : ''}
+                </div>
+            </div>
+        `;
     }
-});
 
-// Очистка фильтров
-document.getElementById('clear-filters').addEventListener('click', () => {
-    document.querySelectorAll('#filters select').forEach(el => el.value = '');
-    document.querySelectorAll('#filters input[type="number"]').forEach(el => el.value = '');
-    document.querySelectorAll('#filters input[type="checkbox"]').forEach(el => el.checked = false);
-    document.getElementById('found-count').classList.add('hidden');
-    document.getElementById('found-count').textContent = '';
-});
+    function renderCurrentAnimeList() {
+        if (resultsDiv) resultsDiv.innerHTML = currentAnimeList.map(renderAnime).join('');
+    }
 
-// Live search + сортировка
-document.getElementById('search-input').addEventListener('input', (e) => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        searchAnime(e.target.value.trim(), 1);
-    }, 400);
-});
+    function showLoading() {
+        if (loading) loading.classList.remove('hidden');
+        if (resultsDiv) resultsDiv.innerHTML = '';
+        if (errorDiv) errorDiv.classList.add('hidden');
+        if (pagination) pagination.classList.add('hidden');
+    }
 
-document.getElementById('sort-select').addEventListener('change', () => {
-    if (!currentAnimeList.length) return;
+    function hideLoading() {
+        if (loading) loading.classList.add('hidden');
+    }
 
-    const sortBy = document.getElementById('sort-select').value;
-
-    currentAnimeList.sort((a, b) => {
-        if (sortBy === 'start_date') {
-            return new Date(b.start_date || 0) - new Date(a.start_date || 0);
+    function showError(msg) {
+        if (errorDiv) {
+            errorDiv.textContent = msg;
+            errorDiv.classList.remove('hidden');
         }
-
-        return (Number(b[sortBy]) || 0) - (Number(a[sortBy]) || 0);
-    });
-
-    renderCurrentAnimeList();
-});
-
-async function searchAnime(query, page = 1) {
-    if (!query.trim()) {
-        resultsDiv.innerHTML = '';
-        pagination.classList.add('hidden');
-        return;
     }
 
-    showLoading();
-    try {
-        const sort = document.getElementById('sort-select').value;
-        const resp = await fetch(
-            `/api/search_anime?q=${encodeURIComponent(query)}&page=${page}&limit=12&order_by=${sort}&sort=desc`
-        );
-        const data = await resp.json();
+    async function searchAnime(query, page = 1) {
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const pagination = document.getElementById('pagination');
 
-        if (data.error) {
-            showError(data.error);
+        if (!query.trim()) {
+            if (resultsDiv) resultsDiv.innerHTML = '';
+            if (pagination) pagination.classList.add('hidden');
             return;
         }
 
-        currentAnimeList = data.data;
-        renderCurrentAnimeList();
+        showLoading();
+        try {
+            const sort = document.getElementById('sort-select')?.value || '';
+            const resp = await fetch(`/api/search_anime?q=${encodeURIComponent(query)}&page=${page}&limit=12&order_by=${sort}&sort=desc`);
+            const data = await resp.json();
+            if (data.error) return showError(data.error);
 
-        currentQuery = query;
-        currentPage = page;
-
-        const hasNext = data.pagination?.has_next_page || false;
-        prevBtn.disabled = page === 1;
-        nextBtn.disabled = !hasNext;
-        pageInfo.textContent = `Страница ${page}`;
-        pagination.classList.toggle('hidden', data.data.length === 0);
-
-    } catch (e) {
-        showError('Нет соединения');
-    } finally {
-        hideLoading();
-    }
-}
-
-
-function renderCurrentAnimeList() {
-    resultsDiv.innerHTML = currentAnimeList.map(renderAnime).join('');
-}
-
-// Несколько случайных аниме + количество
-document.getElementById('apply-filters').addEventListener('click', async () => {
-    showLoading();
-
-    try {
-        const type = document.getElementById('filter-type').value;
-        const status = document.getElementById('filter-status').value;
-        const rating = document.getElementById('filter-rating').value;
-        const minYear = document.getElementById('filter-min-year').value;
-        const maxYear = document.getElementById('filter-max-year').value;
-
-        const genres = Array.from(
-            document.querySelectorAll('.genres-list input[type="checkbox"]:checked')
-        ).map(cb => cb.value).join(',');
-
-        const params = new URLSearchParams({
-            type,
-            status,
-            rating,
-            min_year: minYear,
-            max_year: maxYear,
-            genres,
-            limit: 20,
-            sfw: allowNSFW ? 'false' : 'true'
-        });
-
-        const resp = await fetch(`/api/random_anime_filtered?${params}`);
-        const data = await resp.json();
-
-        const foundCountEl = document.getElementById('found-count');
-
-        if (data.total > 0) {
-            foundCountEl.textContent = `Найдено ≈ ${data.total.toLocaleString()} тайтлов по выбранным фильтрам`;
-            foundCountEl.classList.remove('hidden');
-        } else {
-            foundCountEl.textContent = 'По таким фильтрам ничего не найдено';
-            foundCountEl.classList.remove('hidden');
-        }
-
-        // Показываем аниме только если есть хоть один результат на этой странице
-        if (data.data && data.data.length > 0) {
             currentAnimeList = data.data;
             renderCurrentAnimeList();
-        } else {
-            // Не скрываем найденное количество, просто не рендерим карточки
-            resultsDiv.innerHTML = '';
+
+            currentQuery = query;
+            currentPage = page;
+
+            if (prevBtn) prevBtn.disabled = page === 1;
+            if (nextBtn) nextBtn.disabled = !data.pagination?.has_next_page;
+            if (pageInfo) pageInfo.textContent = `Страница ${page}`;
+            if (pagination) pagination.classList.toggle('hidden', data.data.length === 0);
+
+        } catch (err) {
+            showError('Нет соединения');
+        } finally {
+            hideLoading();
         }
-
-        pagination.classList.add('hidden');
-
-    } catch (e) {
-        console.error(e);
-        showError('Ошибка при загрузке');
-    } finally {
-        hideLoading();
     }
-});
 
-function showLoading() {
-    loading.classList.remove('hidden');
-    resultsDiv.innerHTML = '';
-    errorDiv.classList.add('hidden');
-    pagination.classList.add('hidden');
-}
+    // --- Тема сайта ---
+    function setTheme(theme) {
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        if (themeToggle) themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+    }
+    setTheme(localStorage.getItem('theme') || 'dark');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+    }
 
-function hideLoading() {
-    loading.classList.add('hidden');
-}
+    // --- Фильтры ---
+    if (toggleFiltersBtn && filtersDiv) {
+        toggleFiltersBtn.addEventListener('click', () => {
+            if (filtersDiv.style.maxHeight === '0px' || filtersDiv.style.maxHeight === '') {
+                filtersDiv.style.maxHeight = '2000px';
+                filtersDiv.style.opacity = '1';
+                filtersDiv.style.paddingTop = '20px';
+                filtersDiv.style.paddingBottom = '20px';
+                toggleFiltersBtn.textContent = 'Скрыть фильтры ▲';
+            } else {
+                filtersDiv.style.maxHeight = '0px';
+                filtersDiv.style.opacity = '0';
+                filtersDiv.style.paddingTop = '0';
+                filtersDiv.style.paddingBottom = '0';
+                toggleFiltersBtn.textContent = 'Показать фильтры ▼';
+            }
+        });
+    }
 
-function showError(msg) {
-    errorDiv.textContent = msg;
-    errorDiv.classList.remove('hidden');
-}
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            document.querySelectorAll('#filters select').forEach(el => el.value = '');
+            document.querySelectorAll('#filters input[type="number"]').forEach(el => el.value = '');
+            document.querySelectorAll('#filters input[type="checkbox"]').forEach(el => el.checked = false);
+            const foundCount = document.getElementById('found-count');
+            if (foundCount) {
+                foundCount.classList.add('hidden');
+                foundCount.textContent = '';
+            }
+        });
+    }
 
-function renderAnime(anime) {
-    const year = anime.start_date
-        ? anime.start_date.slice(0, 4)
-        : '—';
+    const applyFiltersBtn = document.getElementById('apply-filters');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', async () => {
+            showLoading();
+            try {
+                const type = document.getElementById('filter-type')?.value || '';
+                const status = document.getElementById('filter-status')?.value || '';
+                const rating = document.getElementById('filter-rating')?.value || '';
+                const minYear = document.getElementById('filter-min-year')?.value || '';
+                const maxYear = document.getElementById('filter-max-year')?.value || '';
+                const genres = Array.from(document.querySelectorAll('.genres-list input[type="checkbox"]:checked')).map(cb => cb.value).join(',');
 
-    return `
-        <div class="card">
-            <img src="${anime.image}" alt="${anime.title}">
-            <div class="card-info">
-                <div class="card-title">${anime.title}</div>
+                const params = new URLSearchParams({ type, status, rating, min_year: minYear, max_year: maxYear, genres, limit: 20, sfw: allowNSFW ? 'false' : 'true' });
+                const resp = await fetch(`/api/random_anime_filtered?${params}`);
+                const data = await resp.json();
 
-                <div class="card-meta">
-                    ${anime.type} • ${year} • ${anime.episodes} эп. • ⭐ ${anime.score}
-                </div>
-
-                <div class="card-synopsis">${anime.synopsis}</div>
-
-                ${
-                    document.body.dataset.userLoggedIn === 'true'
-                    ? `<button class="btn-add" data-mal-id="${anime.mal_id}">
-                        ➕ В список
-                      </button>`
-                    : ''
+                const foundCountEl = document.getElementById('found-count');
+                if (foundCountEl) {
+                    if (data.total > 0) {
+                        foundCountEl.textContent = `Найдено ≈ ${data.total.toLocaleString()} тайтлов по выбранным фильтрам`;
+                        foundCountEl.classList.remove('hidden');
+                    } else {
+                        foundCountEl.textContent = 'По таким фильтрам ничего не найдено';
+                        foundCountEl.classList.remove('hidden');
+                    }
                 }
-            </div>
-        </div>
-    `;
-}
 
-// Live search с debounce
-document.getElementById('search-input').addEventListener('input', (e) => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        searchAnime(e.target.value.trim(), 1);
-    }, 400);
-});
+                if (data.data && data.data.length > 0) {
+                    currentAnimeList = data.data;
+                    renderCurrentAnimeList();
+                } else {
+                    if (resultsDiv) resultsDiv.innerHTML = '';
+                }
 
-// Кнопка случайного аниме (БЕЗ фильтров)
-document.getElementById('random-btn').addEventListener('click', async () => {
-    showLoading();
+                if (pagination) pagination.classList.add('hidden');
 
-    try {
-        const resp = await fetch(`/api/random_anime_filtered?limit=20&sfw=${allowNSFW ? 'false' : 'true'}`);
-
-        const data = await resp.json();
-
-        if (!data.data || data.data.length === 0) {
-            showError('Не удалось получить аниме');
-            return;
-        }
-
-        currentAnimeList = data.data;
-        renderCurrentAnimeList();
-
-        pagination.classList.add('hidden');
-
-    } catch (e) {
-        console.error(e);
-        showError('Ошибка соединения');
-    } finally {
-        hideLoading();
+            } catch (err) {
+                console.error(err);
+                showError('Ошибка при загрузке');
+            } finally {
+                hideLoading();
+            }
+        });
     }
-});
 
-// Показ модального окна NSFW при первом посещении
-document.addEventListener('DOMContentLoaded', () => {
+    // --- Поиск и сортировка ---
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => searchAnime(e.target.value.trim(), 1), 400);
+        });
+    }
+
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            if (!currentAnimeList.length) return;
+            const sortBy = sortSelect.value;
+            currentAnimeList.sort((a, b) => {
+                if (sortBy === 'start_date') return new Date(b.start_date || 0) - new Date(a.start_date || 0);
+                return (Number(b[sortBy]) || 0) - (Number(a[sortBy]) || 0);
+            });
+            renderCurrentAnimeList();
+        });
+    }
+
+    // --- Случайное аниме ---
+    const randomBtn = document.getElementById('random-btn');
+    if (randomBtn) {
+        randomBtn.addEventListener('click', async () => {
+            showLoading();
+            try {
+                const resp = await fetch(`/api/random_anime_filtered?limit=20&sfw=${allowNSFW ? 'false' : 'true'}`);
+                const data = await resp.json();
+                if (!data.data || data.data.length === 0) return showError('Не удалось получить аниме');
+                currentAnimeList = data.data;
+                renderCurrentAnimeList();
+                if (pagination) pagination.classList.add('hidden');
+            } catch (err) {
+                console.error(err);
+                showError('Ошибка соединения');
+            } finally {
+                hideLoading();
+            }
+        });
+    }
+
+    // --- NSFW модалка ---
     const nsfwModal = document.getElementById('nsfw-modal');
-    const rememberCheckbox = document.getElementById('remember-choice');
-    const hasChosenLocal = localStorage.getItem('nsfw_choice') !== null;
+    if (nsfwModal) {
+        const rememberCheckbox = document.getElementById('remember-choice');
+        const hasChosenLocal = localStorage.getItem('nsfw_choice') !== null;
+        const isLoggedIn = document.body.getAttribute('data-nsfw') !== null;
 
-    // Если пользователь залогинен, используем БД (NSFW уже задано)
-    const isLoggedIn = document.body.getAttribute('data-nsfw') !== null;
-
-    if (isLoggedIn) {
-        console.log("NSFW из БД:", allowNSFW ? "разрешён" : "запрещён");
-        return;
+        if (!isLoggedIn && !hasChosenLocal) {
+            nsfwModal.classList.add('show');
+            document.getElementById('nsfw-yes')?.addEventListener('click', () => {
+                allowNSFW = true;
+                if (rememberCheckbox?.checked) localStorage.setItem('nsfw_choice', 'true');
+                nsfwModal.classList.remove('show');
+            });
+            document.getElementById('nsfw-no')?.addEventListener('click', () => {
+                allowNSFW = false;
+                if (rememberCheckbox?.checked) localStorage.setItem('nsfw_choice', 'false');
+                nsfwModal.classList.remove('show');
+            });
+        } else if (hasChosenLocal) {
+            allowNSFW = localStorage.getItem('nsfw_choice') === 'true';
+            console.log("NSFW из localStorage:", allowNSFW ? "разрешён" : "запрещён");
+        }
     }
 
-    // Если выбор уже есть в localStorage — используем его
-    if (hasChosenLocal) {
-        allowNSFW = localStorage.getItem('nsfw_choice') === 'true';
-        console.log("NSFW из localStorage:", allowNSFW ? "разрешён" : "запрещён");
-        return;
-    }
-
-    // Показываем модалку для гостя
-    nsfwModal.classList.add('show');
-
-    document.getElementById('nsfw-yes').addEventListener('click', () => {
-        allowNSFW = true;
-        if (rememberCheckbox.checked) {
-            localStorage.setItem('nsfw_choice', 'true');
-        }
-        nsfwModal.classList.remove('show');
-    });
-
-    document.getElementById('nsfw-no').addEventListener('click', () => {
-        allowNSFW = false;
-        if (rememberCheckbox.checked) {
-            localStorage.setItem('nsfw_choice', 'false');
-        }
-        nsfwModal.classList.remove('show');
-    });
-});
-
-// Обновление 18+ через AJAX после сохранения на странице настроек
-const nsfwCheckbox = document.getElementById('nsfw-checkbox');
-if (nsfwCheckbox) {
-    nsfwCheckbox.addEventListener('change', async (e) => {
-        const checked = e.target.checked;
-        const resp = await fetch('/api/set_nsfw', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nsfw: checked })
+    // --- Настройки 18+ ---
+    const nsfwCheckbox = document.getElementById('nsfw-checkbox');
+    if (nsfwCheckbox) {
+        nsfwCheckbox.addEventListener('change', async (e) => {
+            const checked = e.target.checked;
+            const resp = await fetch('/api/set_nsfw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nsfw: checked })
+            });
+            const data = await resp.json();
+            if (data.success) alert("Настройки 18+ обновлены!");
         });
-        const data = await resp.json();
-        if (data.success) {
-            alert("Настройки 18+ обновлены!");
+    }
+
+    // --- Кнопки навигации ---
+    const settingsBtn = document.getElementById('btn-settings');
+    if (settingsBtn) settingsBtn.addEventListener('click', () => window.location.href = '/settings');
+
+    const myListBtn = document.getElementById('btn-my-list');
+    if (myListBtn) myListBtn.addEventListener('click', () => window.location.href = '/my-list');
+
+    // --- Список пользователя ---
+    const listContainer = document.querySelector('.list-grid');
+    if (listContainer) {
+        console.log('Найдено карточек:', listContainer.querySelectorAll('.list-card-wide').length);
+
+        // Изменение статуса, оценки, приватности
+        listContainer.addEventListener('change', async (e) => {
+            const card = e.target.closest('.list-card-wide');
+            if (!card) return;
+
+            const id = parseInt(card.dataset.animeId, 10);
+
+            let endpoint = null;
+            let payload = null;
+
+            if (e.target.classList.contains('status-select')) {
+                endpoint = '/api/update_status';
+                payload = { id, status: e.target.value };
+
+            } else if (e.target.classList.contains('score-select')) {
+                endpoint = '/api/update_score';
+                payload = {
+                    id,
+                    score: e.target.value ? parseInt(e.target.value, 10) : null
+                };
+
+            } else if (e.target.classList.contains('private-checkbox')) {
+                endpoint = '/api/update_private';
+                payload = { id, is_private: e.target.checked };
+
+            } else if (e.target.classList.contains('comment-input')) {
+                endpoint = '/api/update_comment';
+                payload = { id, comment: e.target.value };
+
+            } else {
+                return;
+            }
+
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                if (!data.success) {
+                    alert('Ошибка при обновлении');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка соединения с сервером');
+            }
+        });
+
+        // Удаление
+        listContainer.addEventListener('click', async (e) => {
+            console.log('click event:', e.target);
+            if (!e.target.classList.contains('btn-delete')) return;
+            const card = e.target.closest('.list-card-wide');
+            if (!card) return;
+            const id = parseInt(card.dataset.animeId, 10);
+
+            try {
+                const resp = await fetch('/api/delete_from_list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const data = await resp.json();
+                if (data.success) card.remove();
+                else alert('Ошибка при удалении');
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка соединения с сервером');
+            }
+        });
+    }
+
+    // --- Кнопки добавления аниме в список ---
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-add');
+        if (!btn) return;
+        const card = btn.closest('.card');
+        if (!card) return;
+        const anime = JSON.parse(decodeURIComponent(card.dataset.anime));
+
+        btn.disabled = true;
+        try {
+            const resp = await fetch('/api/toggle_list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(anime)
+            });
+            const data = await resp.json();
+            if (data.status === 'added') {
+                btn.textContent = '✔ В списке';
+                btn.classList.add('added');
+            } else if (data.status === 'removed') {
+                btn.textContent = '➕ В список';
+                btn.classList.remove('added');
+            }
+        } finally {
+            btn.disabled = false;
         }
     });
-}
+}); // --- Конец DOMContentLoaded ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    const settingsBtn = document.getElementById('btn-settings');
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', () => {
-            window.location.href = '/settings';
-        });
-    }
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+
+    // Навигация по страницам
+    if (prevBtn) prevBtn.addEventListener('click', () => searchAnime(currentQuery, currentPage - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => searchAnime(currentQuery, currentPage + 1));
 });
-
-document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.btn-add');
-    if (!btn) return;
-
-    const malId = btn.dataset.malId;
-
-    try {
-        const resp = await fetch('/api/add_to_list', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mal_id: malId })
-        });
-
-        const data = await resp.json();
-
-        if (data.success || data.message === 'already_added') {
-            btn.textContent = '✔ В списке';
-            btn.disabled = true;
-            btn.classList.add('added');
-        }
-
-    } catch (err) {
-        console.error(err);
-        alert('Ошибка при добавлении в список');
-    }
-});
-
-// Пагинация
-prevBtn.addEventListener('click', () => searchAnime(currentQuery, currentPage - 1));
-nextBtn.addEventListener('click', () => searchAnime(currentQuery, currentPage + 1));

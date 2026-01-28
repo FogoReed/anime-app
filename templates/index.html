@@ -19,6 +19,7 @@
             <div class="header-buttons">
                 {% if current_user.is_authenticated %}
                     <span>Привет, {{ current_user.username }}!</span>
+                    <button id="btn-my-list" title="Мой список">📚</button>
                     <button id="btn-settings" title="Настройки">⚙️</button>
                     <a href="{{ url_for('logout') }}" class="btn btn-logout">Выйти</a>
                 {% else %}

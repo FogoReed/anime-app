@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой список</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body data-theme="dark">
+<div class="container">
+    <div class="header">
+        <h1>📚 Мой список</h1>
+        <a href="{{ url_for('index') }}" class="btn">← Назад</a>
+    </div>
+
+    {% if anime_list %}
+        <div class="list-grid">
+            {% for item in anime_list %}
+                <div class="list-card-wide" data-anime-id="{{ item.id }}">
+
+                    <!-- Левая часть -->
+                    <div class="list-card-left">
+                        <img src="{{ item.image }}" alt="{{ item.title }}">
+                    </div>
+
+                    <!-- Правая часть -->
+                    <div class="list-card-right">
+                        <h2>{{ item.title }}</h2>
+
+                        <div class="meta">
+                            {{ item.type }} • {{ item.year }} • {{ item.episodes }} эп.
+                        </div>
+
+                        <p class="synopsis">{{ item.synopsis }}</p>
+
+                        <div class="controls">
+                            <select class="status-select">
+                                <option value="planned" {{ 'selected' if item.status=='planned' }}>Запланировано</option>
+                                <option value="watching" {{ 'selected' if item.status=='watching' }}>Смотрю</option>
+                                <option value="completed" {{ 'selected' if item.status=='completed' }}>Просмотрено</option>
+                                <option value="dropped" {{ 'selected' if item.status=='dropped' }}>Брошено</option>
+                            </select>
+
+                            <select class="score-select">
+                                <option value="">Оценка</option>
+                                {% for i in range(1,11) %}
+                                    <option value="{{ i }}" {{ 'selected' if item.score==i }}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <button class="btn-delete">🗑 Удалить</button>
+                            <label>
+                                <input type="checkbox" class="private-checkbox" {% if item.is_private %}checked{% endif %}>
+                                <span>Приватно</span>
+                            </label>
+                        </div>
+                        <div class="comment-box">
+                            <textarea
+                                class="comment-input"
+                                placeholder="Личный комментарий..."
+                            >{{ item.comment or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Список пуст 😢</p>
+    {% endif %}
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -243,6 +243,30 @@ def settings():
 
     return render_template('settings.html', user=current_user)
 
+@app.route('/my-list')
+@login_required
+def my_list():
+    items = UserAnime.query.filter_by(user_id=current_user.id).all()
+
+    anime_list = []
+    for item in items:
+        anime_list.append({
+            'id': item.id,
+            'mal_id': item.mal_id,
+            'title': item.title,
+            'image': item.image,
+            'type': item.type,
+            'episodes': item.episodes,
+            'year': item.year,
+            'synopsis': item.synopsis,
+            'status': item.status,
+            'score': item.score,
+            'comment': item.comment,
+            'is_private': item.is_private
+        })
+
+    return render_template('my_list.html', anime_list=anime_list)
+
 @app.route('/api/add_to_list', methods=['POST'])
 @login_required
 def add_to_list():
@@ -268,6 +292,115 @@ def add_to_list():
     )
 
     db.session.add(anime)
+    db.session.commit()
+
+    return jsonify({'success': True})
+
+@app.route('/api/delete_from_list', methods=['POST'])
+@login_required
+def delete_from_list():
+    data = request.get_json()
+    anime_id = data.get('id')
+
+    anime = UserAnime.query.filter_by(
+        id=anime_id,
+        user_id=current_user.id
+    ).first_or_404()
+
+    db.session.delete(anime)
+    db.session.commit()
+
+    return jsonify({'success': True})
+
+@app.route('/api/update_status', methods=['POST'])
+@login_required
+def update_status():
+    data = request.get_json()
+    print("DATA:", data)
+    anime_id = data.get('id')
+    status = data.get('status')
+    anime = UserAnime.query.filter_by(id=anime_id, user_id=current_user.id).first()
+    if not anime:
+        return jsonify({'success': False, 'error': 'Anime not found'}), 404
+    anime.status = status
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/update_score', methods=['POST'])
+@login_required
+def update_score():
+    data = request.get_json()
+    anime_id = data.get('id')
+    score = data.get('score')
+
+    anime = UserAnime.query.filter_by(
+        id=anime_id,
+        user_id=current_user.id
+    ).first_or_404()
+
+    anime.score = score if score else None
+    db.session.commit()
+
+    return jsonify({'success': True})
+
+@app.route('/api/toggle_list', methods=['POST'])
+@login_required
+def toggle_list():
+    data = request.get_json()
+    mal_id = data.get('mal_id')
+
+    anime = UserAnime.query.filter_by(
+        user_id=current_user.id,
+        mal_id=mal_id
+    ).first()
+
+    if anime:
+        db.session.delete(anime)
+        db.session.commit()
+        return jsonify({'status': 'removed'})
+
+    anime = UserAnime(
+        user_id=current_user.id,
+        mal_id=mal_id,
+        title=data.get('title'),
+        image=data.get('image'),
+        type=data.get('type'),
+        episodes=data.get('episodes'),
+        year=data.get('year'),
+        synopsis=data.get('synopsis'),
+        status='planned'
+    )
+
+    db.session.add(anime)
+    db.session.commit()
+    return jsonify({'status': 'added'})
+
+@app.route('/api/update_private', methods=['POST'])
+@login_required
+def update_private():
+    data = request.get_json()
+    anime_id = data.get('id')
+    is_private = bool(data.get('is_private'))
+
+    anime = UserAnime.query.filter_by(id=anime_id, user_id=current_user.id).first_or_404()
+    anime.is_private = is_private
+    db.session.commit()
+
+    return jsonify({'success': True})
+
+@app.route('/api/update_comment', methods=['POST'])
+@login_required
+def update_comment():
+    data = request.get_json()
+    anime_id = data.get('id')
+    comment = data.get('comment', '').strip()
+
+    anime = UserAnime.query.filter_by(
+        id=anime_id,
+        user_id=current_user.id
+    ).first_or_404()
+
+    anime.comment = comment
     db.session.commit()
 
     return jsonify({'success': True})

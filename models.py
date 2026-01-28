@@ -32,12 +32,16 @@ class UserAnime(db.Model):
 
     mal_id = db.Column(db.Integer, nullable=False)
 
-    status = db.Column(
-        db.String(20),
-        default='planned'
-    )
+    # ⬇️ НОВОЕ
+    title = db.Column(db.String(255))
+    image = db.Column(db.String(500))
+    type = db.Column(db.String(20))
+    episodes = db.Column(db.Integer)
+    year = db.Column(db.Integer)
+    synopsis = db.Column(db.Text)
 
-    score = db.Column(db.Integer)  # 1–10, NULL если не оценено
+    status = db.Column(db.String(20), default='planned')
+    score = db.Column(db.Integer)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
@@ -45,7 +49,11 @@ class UserAnime(db.Model):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
+    
+    is_private = db.Column(db.Boolean, default=False)
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'mal_id', name='unique_user_anime'),
     )
+
+    comment = db.Column(db.Text)
