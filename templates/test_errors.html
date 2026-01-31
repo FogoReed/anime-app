@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестирование страниц ошибок | Anime Searcher</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body
+    data-nsfw="{{ 'true' if current_user.is_authenticated and current_user.nsfw_allowed else '' }}"
+    data-user-logged-in="{{ 'true' if current_user.is_authenticated else 'false' }}"
+    data-test-page="true"
+>
+    <div class="container">
+        <div class="header">
+            <h1>Anime Searcher</h1>
+            <div class="header-buttons">
+                {% if current_user.is_authenticated %}
+                    <span>Привет, {{ current_user.username }}!</span>
+                    <button id="btn-my-list" class="icon-btn" title="Мой список">📚</button>
+                    <button id="btn-settings" class="icon-btn" title="Настройки">⚙️</button>
+                    <a href="{{ url_for('logout') }}" class="btn btn-logout">Выйти</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-login">Вход</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-register">Регистрация</a>
+                {% endif %}
+                <button id="theme-toggle" class="icon-btn" title="Сменить тему">🌙</button>
+            </div>
+        </div>
+        
+        <!-- Test Errors Content -->
+        <div class="test-errors-container" style="text-align: center; padding: 40px 20px;">
+            <div class="test-icon" style="font-size: 6rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite;">
+                🔧
+            </div>
+            
+            <h1 style="font-size: 3.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 20px;">
+                Тестирование страниц ошибок
+            </h1>
+            
+            <h2 style="font-size: 2rem; margin-bottom: 25px; color: var(--text-primary);">
+                Режим отладки (DEBUG=True)
+            </h2>
+            
+            <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-lg); padding: 25px; margin-bottom: 40px; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h2 style="color: #10b981; margin-bottom: 15px;">ℹ️ Информация</h2>
+                <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.6;">
+                    Эта страница доступна только в режиме отладки (DEBUG=True).
+                </p>
+                <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.6;">
+                    Нажмите на любую карточку ниже, чтобы увидеть соответствующую страницу ошибки.
+                </p>
+                <p style="font-size: 0.95rem; color: #10b981; margin-top: 15px;">
+                    <strong>Примечание:</strong> Эти маршруты не будут доступны в production.
+                </p>
+            </div>
+            
+            <div class="error-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-top: 30px;">
+                <!-- 400 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #f59e0b; background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        400
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Неверный запрос
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Сервер не может обработать запрос из-за некорректного синтаксиса.
+                    </div>
+                    <a href="{{ url_for('test_400') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        📋 Тестировать 400
+                    </a>
+                </div>
+                
+                <!-- 401 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(59, 130, 246, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #3b82f6; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        401
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Требуется авторизация
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Для доступа к ресурсу требуется аутентификация.
+                    </div>
+                    <a href="{{ url_for('test_401') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        🔒 Тестировать 401
+                    </a>
+                </div>
+                
+                <!-- 403 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(220, 38, 38, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #dc2626; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        403
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Доступ запрещен
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        У вас нет прав для доступа к этому ресурсу.
+                    </div>
+                    <a href="{{ url_for('test_403') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        🚫 Тестировать 403
+                    </a>
+                </div>
+                
+                <!-- 404 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(255, 107, 107, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #ff6b6b; background: linear-gradient(135deg, #ff6b6b 0%, #667eea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        404
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Страница не найдена
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Запрошенная страница не существует на сервере.
+                    </div>
+                    <a href="{{ url_for('test_404') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        🎭 Тестировать 404
+                    </a>
+                </div>
+                
+                <!-- 429 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #d97706; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        429
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Слишком много запросов
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Превышен лимит запросов. Пожалуйста, подождите.
+                    </div>
+                    <a href="{{ url_for('test_429') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        ⏳ Тестировать 429
+                    </a>
+                </div>
+                
+                <!-- 500 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(239, 68, 68, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #ef4444; background: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        500
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Внутренняя ошибка сервера
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Произошла непредвиденная ошибка на сервере.
+                    </div>
+                    <a href="{{ url_for('test_500') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        ⚠️ Тестировать 500
+                    </a>
+                </div>
+                
+                <!-- 502 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(139, 92, 246, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #8b5cf6; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        502
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Плохой шлюз
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Сервер получил неверный ответ от вышестоящего сервера.
+                    </div>
+                    <a href="{{ url_for('test_502') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        🔌 Тестировать 502
+                    </a>
+                </div>
+                
+                <!-- 503 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #d97706; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        503
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Сервис недоступен
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Сервер временно не может обработать запрос.
+                    </div>
+                    <a href="{{ url_for('test_503') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        🚧 Тестировать 503
+                    </a>
+                </div>
+                
+                <!-- 504 -->
+                <div class="error-card" style="background: var(--bg-card); padding: 25px; border-radius: var(--radius-xl); border: 2px solid rgba(139, 92, 246, 0.3); transition: all 0.3s ease; height: 100%;">
+                    <div class="error-code" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; color: #7c3aed; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        504
+                    </div>
+                    <div class="error-name" style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 15px; font-weight: 600;">
+                        Таймаут шлюза
+                    </div>
+                    <div class="error-desc" style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5; height: 60px;">
+                        Сервер не получил ответ от вышестоящего сервера вовремя.
+                    </div>
+                    <a href="{{ url_for('test_504') }}" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: var(--radius-lg); text-decoration: none; display: block;">
+                        ⏰ Тестировать 504
+                    </a>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border-color);">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="padding: 15px 40px; font-size: 1.2rem; text-decoration: none; display: inline-block; border-radius: var(--radius-xl); margin: 0 10px;">
+                    🏠 Вернуться на главную
+                </a>
+                <a href="/test/errors" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.2rem; text-decoration: none; display: inline-block; border-radius: var(--radius-xl); margin: 0 10px;">
+                    🔄 Обновить эту страницу
+                </a>
+            </div>
+            
+            <div style="margin-top: 50px; padding: 25px; background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color); max-width: 900px; margin-left: auto; margin-right: auto;">
+                <h3 style="margin-bottom: 20px; color: var(--text-primary); text-align: center;">📋 Все тестовые маршруты ошибок:</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; font-family: 'Roboto', monospace;">
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/400</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/401</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/403</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/404</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/429</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/500</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/502</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/503</code>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-md); text-align: center;">
+                        <code style="color: var(--primary);">/test/504</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Навигационные кнопки
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const settingsBtn = document.getElementById('btn-settings');
+            const myListBtn = document.getElementById('btn-my-list');
+            
+            // Анимация при наведении на карточки
+            const errorCards = document.querySelectorAll('.error-card');
+            errorCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px)';
+                    this.style.boxShadow = 'var(--shadow-xl)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+            
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+            
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', function() {
+                    window.location.href = '{{ url_for("settings") }}';
+                });
+            }
+            
+            if (myListBtn) {
+                myListBtn.addEventListener('click', function() {
+                    window.location.href = '{{ url_for("my_list") }}';
+                });
+            }
+            
+            // Установка темы сразу при загрузке
+            (function() {
+                const savedTheme = localStorage.getItem('theme');
+                let theme;
+                
+                if (savedTheme) {
+                    theme = savedTheme;
+                } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    theme = prefersDark ? 'dark' : 'light';
+                    localStorage.setItem('theme', theme);
+                }
+                
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        });
+    </script>
+    
+    <style>
+        .test-errors-container {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .error-card {
+            transition: all 0.3s ease !important;
+        }
+        
+        .error-card:hover {
+            transform: translateY(-10px) !important;
+            box-shadow: var(--shadow-xl) !important;
+        }
+        
+        code {
+            font-family: 'Roboto', monospace;
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+        }
+    </style>
+</body>
+</html>

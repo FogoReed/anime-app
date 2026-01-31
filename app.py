@@ -405,5 +405,107 @@ def update_comment():
 
     return jsonify({'success': True})
 
+# --- Обработчики ошибок ---
+@app.errorhandler(400)
+def bad_request(error):
+    return render_template('400.html'), 400
+
+@app.errorhandler(401)
+def unauthorized(error):
+    return render_template('401.html'), 401
+
+@app.errorhandler(403)
+def forbidden(error):
+    return render_template('403.html'), 403
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(429)
+def too_many_requests(error):
+    return render_template('429.html'), 429
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    # Логируем ошибку для отладки
+    app.logger.error(f"500 Error: {str(error)}")
+    return render_template('500.html'), 500
+
+@app.errorhandler(502)
+def bad_gateway(error):
+    return render_template('502.html'), 502
+
+@app.errorhandler(503)
+def service_unavailable(error):
+    return render_template('503.html'), 503
+
+@app.errorhandler(504)
+def gateway_timeout(error):
+    return render_template('504.html'), 504
+
+
+
+# /* =========================================
+#    TEST ERRORING ROUTES
+#    ========================================= */
+
+# Тестовые маршруты для проверки страниц ошибок (только в режиме отладки)
+if app.config.get('DEBUG'):
+    @app.route('/test/400')
+    def test_400():
+        from werkzeug.exceptions import BadRequest
+        raise BadRequest()
+    
+    @app.route('/test/401')
+    def test_401():
+        from werkzeug.exceptions import Unauthorized
+        raise Unauthorized()
+    
+    @app.route('/test/403')
+    def test_403():
+        from werkzeug.exceptions import Forbidden
+        raise Forbidden()
+    
+    @app.route('/test/404')
+    def test_404():
+        from werkzeug.exceptions import NotFound
+        raise NotFound()
+    
+    @app.route('/test/429')
+    def test_429():
+        from werkzeug.exceptions import TooManyRequests
+        raise TooManyRequests()
+    
+    @app.route('/test/500')
+    def test_500():
+        # Искусственно вызываем ошибку 500
+        1 / 0
+    
+    @app.route('/test/502')
+    def test_502():
+        from werkzeug.exceptions import BadGateway
+        raise BadGateway()
+    
+    @app.route('/test/503')
+    def test_503():
+        from werkzeug.exceptions import ServiceUnavailable
+        raise ServiceUnavailable()
+    
+    @app.route('/test/504')
+    def test_504():
+        from werkzeug.exceptions import GatewayTimeout
+        raise GatewayTimeout()
+    
+    @app.route('/test/errors')
+    def test_errors():
+        return render_template('test_errors.html')
+    
+# /* =========================================
+#    TEST ERRORING ROUTES
+#    ========================================= */
+
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=app.config['DEBUG'])

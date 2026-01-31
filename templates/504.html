@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>504 - Таймаут шлюза | Anime Searcher</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body
+    data-nsfw="{{ 'true' if current_user.is_authenticated and current_user.nsfw_allowed else '' }}"
+    data-user-logged-in="{{ 'true' if current_user.is_authenticated else 'false' }}"
+>
+    <div class="container">
+        <div class="header">
+            <h1>Anime Searcher</h1>
+            <div class="header-buttons">
+                {% if current_user.is_authenticated %}
+                    <span>Привет, {{ current_user.username }}!</span>
+                    <button id="btn-my-list" class="icon-btn" title="Мой список">📚</button>
+                    <button id="btn-settings" class="icon-btn" title="Настройки">⚙️</button>
+                    <a href="{{ url_for('logout') }}" class="btn btn-logout">Выйти</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-login">Вход</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-register">Регистрация</a>
+                {% endif %}
+                <button id="theme-toggle" class="icon-btn" title="Сменить тему">🌙</button>
+            </div>
+        </div>
+        
+        <!-- 504 Content -->
+        <div class="error-container" style="text-align: center; padding: 60px 20px;">
+            <div class="error-icon" style="font-size: 8rem; margin-bottom: 30px; animation: float 3s ease-in-out infinite;">
+                ⏰
+            </div>
+            
+            <h1 style="font-size: 4rem; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 20px;">
+                504
+            </h1>
+            
+            <h2 style="font-size: 2.5rem; margin-bottom: 20px; color: var(--text-primary);">
+                Время ожидания истекло
+            </h2>
+            
+            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Сервер не получил своевременный ответ от внешнего сервиса (Jikan API). 
+                Возможно, API перегружено или работает медленно.
+            </p>
+            
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="window.location.reload()" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.2rem;">
+                    🔄 Попробовать снова
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="padding: 15px 40px; font-size: 1.2rem;">
+                    🏠 На главную
+                </a>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('my_list') }}" class="btn btn-login" style="padding: 15px 40px; font-size: 1.2rem;">
+                    📚 Мой список
+                </a>
+                {% endif %}
+            </div>
+            
+            <div style="margin-top: 50px; padding: 30px; background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color); max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h3 style="margin-bottom: 15px; color: var(--text-primary);">Что можно сделать:</h3>
+                <ul style="text-align: left; color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6;">
+                    <li style="margin-bottom: 10px;">⏳ Подождите 1-2 минуты и попробуйте снова</li>
+                    <li style="margin-bottom: 10px;">🔍 Попробуйте другой поисковый запрос (более короткий или конкретный)</li>
+                    <li style="margin-bottom: 10px;">🎲 Используйте функцию "Случайное аниме"</li>
+                    <li style="margin-bottom: 10px;">📚 Посмотрите сохраненные аниме в "Моем списке"</li>
+                </ul>
+            </div>
+            
+            <div style="margin-top: 30px; padding: 20px; background: var(--bg-secondary); border-radius: var(--radius-lg); max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h4 style="color: var(--text-primary); margin-bottom: 10px;">🎯 Советы для быстрого поиска:</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; text-align: center;">
+                    <div style="padding: 15px; background: var(--bg-card); border-radius: var(--radius-md);">
+                        <div style="font-size: 1.5rem; margin-bottom: 5px;">📝</div>
+                        <div style="font-weight: bold; color: var(--primary);">Краткие запросы</div>
+                    </div>
+                    <div style="padding: 15px; background: var(--bg-card); border-radius: var(--radius-md);">
+                        <div style="font-size: 1.5rem; margin-bottom: 5px;">🎭</div>
+                        <div style="font-weight: bold; color: var(--primary);">Название аниме</div>
+                    </div>
+                    <div style="padding: 15px; background: var(--bg-card); border-radius: var(--radius-md);">
+                        <div style="font-size: 1.5rem; margin-bottom: 5px;">🏆</div>
+                        <div style="font-weight: bold; color: var(--primary);">Популярное аниме</div>
+                    </div>
+                    <div style="padding: 15px; background: var(--bg-card); border-radius: var(--radius-md);">
+                        <div style="font-size: 1.5rem; margin-bottom: 5px;">🎲</div>
+                        <div style="font-weight: bold; color: var(--primary);">Случайное аниме</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Навигационные кнопки
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const settingsBtn = document.getElementById('btn-settings');
+            const myListBtn = document.getElementById('btn-my-list');
+            
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+            
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', function() {
+                    window.location.href = '/settings';
+                });
+            }
+            
+            if (myListBtn) {
+                myListBtn.addEventListener('click', function() {
+                    window.location.href = '/my-list';
+                });
+            }
+            
+            // Установка темы сразу при загрузке
+            (function() {
+                const savedTheme = localStorage.getItem('theme');
+                let theme;
+                
+                if (savedTheme) {
+                    theme = savedTheme;
+                } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    theme = prefersDark ? 'dark' : 'light';
+                    localStorage.setItem('theme', theme);
+                }
+                
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        });
+    </script>
+    
+    <style>
+        .error-container {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</body>
+</html>

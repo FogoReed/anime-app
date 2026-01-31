@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Страница не найдена | Anime Searcher</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body
+    data-nsfw="{{ 'true' if current_user.is_authenticated and current_user.nsfw_allowed else '' }}"
+    data-user-logged-in="{{ 'true' if current_user.is_authenticated else 'false' }}"
+>
+    <div class="container">
+        <div class="header">
+            <h1>Anime Searcher</h1>
+            <div class="header-buttons">
+                {% if current_user.is_authenticated %}
+                    <span>Привет, {{ current_user.username }}!</span>
+                    <button id="btn-my-list" class="icon-btn" title="Мой список">📚</button>
+                    <button id="btn-settings" class="icon-btn" title="Настройки">⚙️</button>
+                    <a href="{{ url_for('logout') }}" class="btn btn-logout">Выйти</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-login">Вход</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-register">Регистрация</a>
+                {% endif %}
+                <button id="theme-toggle" class="icon-btn" title="Сменить тему">🌙</button>
+            </div>
+        </div>
+        
+        <!-- 404 Content -->
+        <div class="error-container" style="text-align: center; padding: 60px 20px;">
+            <div class="error-icon" style="font-size: 8rem; margin-bottom: 30px; animation: float 3s ease-in-out infinite;">
+                🎭
+            </div>
+            
+            <h1 style="font-size: 4rem; background: linear-gradient(135deg, #ff6b6b 0%, #667eea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 20px;">
+                404
+            </h1>
+            
+            <h2 style="font-size: 2.5rem; margin-bottom: 20px; color: var(--text-primary);">
+                Ой! Аниме скрылось в другой вселенной...
+            </h2>
+            
+            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Страница, которую вы ищете, могла быть удалена, переименована или временно недоступна. 
+                Попробуйте найти своё аниме через поиск или вернитесь на главную страницу.
+            </p>
+            
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('index') }}" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.2rem;">
+                    🏠 На главную
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" onclick="focusSearch()" style="padding: 15px 40px; font-size: 1.2rem;">
+                    🔍 Начать поиск аниме
+                </a>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('my_list') }}" class="btn btn-login" style="padding: 15px 40px; font-size: 1.2rem;">
+                    📚 Мой список
+                </a>
+                {% endif %}
+            </div>
+            
+            <div style="margin-top: 50px; padding: 30px; background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color); max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h3 style="margin-bottom: 20px; color: var(--text-primary);">Попробуйте:</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div class="suggestion-card" style="padding: 20px; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                        <h4>🔍 Поиск аниме</h4>
+                        <p>Воспользуйтесь поиском на главной странице</p>
+                    </div>
+                    <div class="suggestion-card" style="padding: 20px; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                        <h4>🎲 Случайное аниме</h4>
+                        <p>Откройте для себя новые тайтлы</p>
+                    </div>
+                    <div class="suggestion-card" style="padding: 20px; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                        <h4>⚙️ Настройки</h4>
+                        <p>Проверьте настройки аккаунта</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function focusSearch() {
+            // При клике на кнопку поиска, фокусируемся на поле ввода на главной
+            localStorage.setItem('focusSearch', 'true');
+        }
+        
+        // Навигационные кнопки
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const settingsBtn = document.getElementById('btn-settings');
+            const myListBtn = document.getElementById('btn-my-list');
+            
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+            
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', function() {
+                    window.location.href = '/settings';
+                });
+            }
+            
+            if (myListBtn) {
+                myListBtn.addEventListener('click', function() {
+                    window.location.href = '/my-list';
+                });
+            }
+            
+            // Установка темы сразу при загрузке
+            (function() {
+                const savedTheme = localStorage.getItem('theme');
+                let theme;
+                
+                if (savedTheme) {
+                    theme = savedTheme;
+                } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    theme = prefersDark ? 'dark' : 'light';
+                    localStorage.setItem('theme', theme);
+                }
+                
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        });
+    </script>
+    
+    <style>
+        .error-container {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .suggestion-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .suggestion-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+    </style>
+</body>
+</html>
